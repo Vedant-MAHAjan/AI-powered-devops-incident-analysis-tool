@@ -1,0 +1,67 @@
+version: "3.9"
+
+services:
+  # ─────────────────────────────────────────
+  # AI DevOps Incident Copilot - Main Service
+  # ─────────────────────────────────────────
+  copilot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-devops-copilot
+    ports:
+      - "8000:8000"
+    environment:
+      - LLM_MOCK_MODE=true
+      - GITHUB_DRY_RUN=true
+      - SIMULATOR_ENABLED=true
+      - SIMULATOR_INTERVAL=2
+      - SCAN_INTERVAL=15
+      - LOG_LEVEL=INFO
+      - DATABASE_URL=sqlite:///./data/incidents.db
+      # Uncomment below to use Ollama for LLM analysis
+      # - LLM_MOCK_MODE=false
+      # - OLLAMA_BASE_URL=http://ollama:11434
+      # - OLLAMA_MODEL=llama3.2
+      # Uncomment below to create real GitHub issues
+      # - GITHUB_DRY_RUN=false
+      # - GITHUB_TOKEN=your_token_here
+      # - GITHUB_REPO_OWNER=your_username
+      # - GITHUB_REPO_NAME=ai-devops-copilot
+    volumes:
+      - ./data:/app/data
+      - ./src:/app/src  # Hot reload during development
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ─────────────────────────────────────────
+  # Ollama - Local LLM Runtime (Optional)
+  # ─────────────────────────────────────────
+  # Uncomment the section below to run Ollama locally
+  # First run: docker compose up ollama
+  # Then pull a model: docker exec -it ollama ollama pull llama3.2
+  #
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: ollama
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   restart: unless-stopped
+  #   # Uncomment for GPU support (NVIDIA)
+  #   # deploy:
+  #   #   resources:
+  #   #     reservations:
+  #   #       devices:
+  #   #         - driver: nvidia
+  #   #           count: 1
+  #   #           capabilities: [gpu]
+
+# volumes:
+#   ollama_data:
