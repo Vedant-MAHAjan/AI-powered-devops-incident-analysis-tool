@@ -306,8 +306,6 @@ Once running, visit **http://localhost:8000/docs** for the full interactive Swag
 
 ## Demo Walkthrough - Complete
 
-### Step-by-Step Guide for Presentations/Interviews
-
 **1. Start the Application**
 ```bash
 source venv/bin/activate
@@ -857,8 +855,6 @@ This demo simulates a production system. Here's how to adapt it for **real produ
 
 ### Phase 1: Local Validation (Current State)
 
----
-
 ### Phase 2: Real Log Integration
 **Replace the simulator with actual log sources:**
 
@@ -866,22 +862,14 @@ This demo simulates a production system. Here's how to adapt it for **real produ
 #### Option B: Loki Integration
 #### Option C: Fluentd/Vector
 
----
-
 ### Phase 3: Metrics Integration
 
----
-
 ### Phase 4: Database Upgrade
-
----
 
 ### Phase 5: Production LLM Strategy
 
 #### Option A: Self-Hosted (Cost-Effective, Private)
 #### Option B: Cloud LLM APIs  
-
----
 
 ### Phase 6: Enhanced Integrations
 
@@ -889,11 +877,7 @@ This demo simulates a production system. Here's how to adapt it for **real produ
 #### PagerDuty Integration
 #### Grafana Dashboard  
 
----
-
 ### Phase 7: Kubernetes Deployment
-
----
 
 ### Phase 8: Monitoring & Observability
 
