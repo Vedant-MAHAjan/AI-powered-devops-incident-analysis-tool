@@ -22,71 +22,13 @@ An AI-powered DevOps assistant that automatically analyzes production incidents 
 
 ---
 
-### Demo Architecture (Current Implementation)
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    AI DevOps Incident Copilot                       │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  ┌──────────────┐    ┌──────────────────┐    ┌─────────────────┐   │
-│  │ Log Simulator│───▶│ Anomaly Detector │───▶│  LLM Analyzer   │   │
-│  │ (Generates   │    │ • Rule-based     │    │ • Ollama/Llama  │   │
-│  │  8 K8s       │    │ • Statistical    │    │ • Mock Templates│   │
-│  │  Scenarios)  │    │ • Z-score        │    │ • Structured RCA│   │
-│  └──────────────┘    └──────────────────┘    └────────┬────────┘   │
-│                                                       │            │
-│                                                       ▼            │
-│                                             ┌─────────────────┐    │
-│                                             │ Incident Manager│    │
-│                                             │ • Orchestration │    │
-│                                             │ • Storage       │    │
-│                                             │ • API           │    │
-│                                             └───────┬─────────┘    │
-│                                                     │              │
-│                          ┌──────────────────────────┼──────┐       │
-│                          ▼                          ▼      │       │
-│                   ┌────────────┐           ┌──────────┐    │       │
-│                   │  GitHub    │           │ SQLite   │    │       │
-│                   │  Issues    │           │ Database │    │       │
-│                   │ (Auto RCA) │           │(History) │    │       │
-│                   └────────────┘           └──────────┘    │       │
-│                                                            │       │
-└────────────────────────────────────────────────────────────┘       │
-```
+### Demo recording
+[Demo](https://drive.google.com/file/d/1Uup2eTSPx5XZuhRq0vQZRfenLshOxm8V/view?usp=drive_link)
 
+### Demo Architecture (Current Implementation)
+[Diagram](https://drive.google.com/file/d/10pCd8XtXkb-l8CXBDlgrBXqCXBOfhW6i/view?usp=drive_link)
 ### Production Architecture (Future Integration)
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        Production K8s Cluster                       │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐       │
-│  │ Application  │  │  Fluentd /   │  │    Prometheus        │       │
-│  │    Pods      │─▶│   Vector     │─▶│     Metrics          │       │
-│  └──────────────┘  └──────┬───────┘  └──────────┬───────────┘       │
-└─────────────────────────┬─│────────────────────┬─│──────────────────┘
-                          │ │                    │ │
-                          ▼ ▼                    ▼ ▼
-                   ┌────────────┐         ┌────────────┐
-                   │    Loki    │         │ Prometheus │
-                   │ (Log Store)│         │   (TSDB)   │
-                   └──────┬─────┘         └──────┬─────┘
-                          │                      │
-                          └──────────┬───────────┘
-                                     │
-                                     ▼
-                          ┌─────────────────────┐
-                          │  AI Copilot API     │
-                          │  • Real log ingestion│
-                          │  • Live metrics     │
-                          │  • Enhanced ML      │
-                          └─────────┬───────────┘
-                                    │
-                    ┌───────────────┼───────────────┐
-                    ▼               ▼               ▼
-              ┌──────────┐   ┌──────────┐   ┌──────────┐
-              │  GitHub  │   │   Slack  │   │PagerDuty │
-              │  Issues  │   │  Alerts  │   │ Incident │
-              └──────────┘   └──────────┘   └──────────┘
-```
+[Diagram](https://drive.google.com/file/d/1YE06wAsEVHi-m1XPVSt_2XR6X0S_Oc_1/view?usp=drive_link)
 
 ### 📊 **Automated Incident Reporting**
 - **GitHub Integration** — Auto-creates detailed issues with full context
