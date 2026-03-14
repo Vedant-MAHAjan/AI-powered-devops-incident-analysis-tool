@@ -30,6 +30,8 @@ An AI-powered DevOps assistant that automatically analyzes production incidents 
 ### Production Architecture (Future Integration)
 [Diagram](https://drive.google.com/file/d/1YE06wAsEVHi-m1XPVSt_2XR6X0S_Oc_1/view?usp=drive_link)
 
+---
+
 ### 📊 **Automated Incident Reporting**
 - **GitHub Integration** — Auto-creates detailed issues with full context
 - **Rich Metadata** — Severity, affected services, confidence scores, log snippets
@@ -71,7 +73,8 @@ source venv/bin/activate   # macOS/Linux
 
 **3. Install all dependencies**
 ```bash
-pip install -r requirements.txt
+# IMPORTANT: Use explicit venv path to avoid shell alias issues on macOS
+./venv/bin/python -m pip install -r requirements.txt
 ```
 
 **4. Set up environment configuration**
@@ -82,23 +85,41 @@ cp .env.example .env
 
 **5. Initialize the database**
 ```bash
-python -c "from src.database import init_db; init_db()"
+./venv/bin/python -c "from src.database import init_db; init_db()"
 ```
 
 **6. Start the server**
 ```bash
-python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+./venv/bin/python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 **That's it!** The server will start and you'll see:
 ```
+INFO:     Will watch for changes in these directories: ['.../ai-powered-devops']
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     AI DevOps Incident Copilot - Starting Up
-INFO:     Database initialized
-INFO:     LLM Mode: Mock (template-based)
-INFO:     GitHub: Dry Run
-INFO:     Pipeline started - monitoring for anomalies...
+INFO:     Started reloader process [68297] using StatReload
+INFO:     Started server process [68299]
+INFO:     Waiting for application startup.
+2026-03-14 16:01:24 | INFO     | src.main                       | ============================================================
+2026-03-14 16:01:24 | INFO     | src.main                       | AI DevOps Incident Copilot - Starting Up
+2026-03-14 16:01:24 | INFO     | src.main                       | ============================================================
+2026-03-14 16:01:24 | INFO     | src.main                       | Database initialized
+2026-03-14 16:01:24 | INFO     | src.main                       | LLM Mode: Mock (template-based)
+2026-03-14 16:01:24 | INFO     | src.main                       | GitHub: Dry Run
+2026-03-14 16:01:24 | INFO     | src.main                       | Simulator: Enabled
+2026-03-14 16:01:24 | INFO     | src.main                       | Scan Interval: 30s
+2026-03-14 16:01:24 | INFO     | src.incident_manager.manager   | Starting incident detection pipeline...
+2026-03-14 16:01:24 | INFO     | src.log_simulator.simulator    | Log simulator started (interval=2.0s, batch_size=10, anomaly_probability=0.08)
+2026-03-14 16:01:24 | INFO     | src.incident_manager.manager   | Pipeline started - monitoring for anomalies...
+INFO:     Application startup complete.
+
+# The system will then continuously monitor and detect anomalies:
+2026-03-14 16:01:24 | INFO     | src.log_simulator.simulator    | Injected anomaly scenario: DNS Resolution Failures
+2026-03-14 16:01:54 | INFO     | src.anomaly_detector.detector  | Rule-based anomaly: NetworkDNSFailure on payment
+2026-03-14 16:01:54 | INFO     | src.incident_manager.manager   | Incident #1 created: DNS Resolution Failures...
 ```
+
+**Note:** The continuous monitoring is expected behavior - the system detects and analyzes incidents automatically in the background.
 
 **Open your browser:**
 - API Docs: http://localhost:8000/docs
@@ -158,7 +179,7 @@ OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=llama3.2
 
 # 5. Start the copilot
-python -m uvicorn src.main:app --port 8000 --reload
+./venv/bin/python -m uvicorn src.main:app --port 8000 --reload
 ```
 
 **Pro Tip**: Start with mock mode to understand the flow, then switch to Ollama for real AI analysis.
@@ -189,18 +210,49 @@ python -m uvicorn src.main:app --port 8000 --reload
        "root_cause": "The container's memory usage grew beyond...",
        "suggested_fixes": [
          "IMMEDIATE: Increase memory limits...",
-         "SHORT-TERM: Profile memory usage..."
+         "SHORT-TERM: Profile memory usage...",
+         "LONG-TERM: Implement VPA for auto-tuning"
        ],
-       "github_issue_url": "https://github.com/.../issues/1234",
-       "confidence": 0.92
+       "github_issue_url": "https://github.com/your_github_username/ai-devops-copilot/issues/1234",
+       "confidence": 0.95
      }]
    }
    ```
+   
+   **Note:** The incident type varies randomly (OOMKilled, CrashLoopBackOff, DNS failures, DB exhaustion, etc.). All provide detailed RCA.
 
 5. **View Full Incident Details**:
    - Go to `GET /api/v1/incidents/{id}`
    - Enter `1` as the incident_id
    - Execute to see complete RCA with log snippets
+
+---
+
+### Understanding the System Behavior
+
+**Continuous Monitoring is Expected:**
+
+When you start the server, you'll see incidents being created automatically in the terminal logs. This is normal! The system:
+- Generates simulated Kubernetes logs every 2 seconds
+- Scans for anomalies every 30 seconds
+- Auto-creates incidents when anomalies are detected
+- All happens in background asynchronously
+
+**Two Types of Logs:**
+
+1. **Terminal Logs** = Operational monitoring logs showing the copilot's own activity
+   - Example: `src.incident_manager.manager | Incident #3 created...`
+   - Mostly INFO level (the copilot itself is working correctly)
+   - Scrolls continuously as the system monitors
+
+2. **Application Logs** (via API `/api/v1/logs`) = Simulated Kubernetes application logs
+   - Example: `{"level": "ERROR", "message": "OutOfMemoryError: Java heap space"}`
+   - Contains INFO, DEBUG, WARN, ERROR, FATAL levels
+   - This is what the copilot is monitoring for anomalies
+
+**For demos/presentations:** Focus on the browser API interactions at http://localhost:8000/docs, not the scrolling terminal logs.
+
+---
 
 ### Using the API Programmatically
 
@@ -251,19 +303,25 @@ Once running, visit **http://localhost:8000/docs** for the full interactive Swag
 **1. Start the Application**
 ```bash
 source venv/bin/activate
-python -m uvicorn src.main:app --port 8000 --reload
+./venv/bin/python -m uvicorn src.main:app --port 8000 --reload
 ```
 
 **2. Explain the Console Output**
 ```
-INFO: AI DevOps Incident Copilot - Starting Up
-INFO: Database initialized
-INFO: LLM Mode: Mock (template-based)
-INFO: GitHub: Dry Run
-INFO: Simulator: Enabled
-INFO: Pipeline started - monitoring for anomalies...
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-03-14 16:01:24 | INFO     | src.main                       | AI DevOps Incident Copilot - Starting Up
+2026-03-14 16:01:24 | INFO     | src.main                       | Database initialized
+2026-03-14 16:01:24 | INFO     | src.main                       | LLM Mode: Mock (template-based)
+2026-03-14 16:01:24 | INFO     | src.main                       | GitHub: Dry Run
+2026-03-14 16:01:24 | INFO     | src.main                       | Simulator: Enabled
+2026-03-14 16:01:24 | INFO     | src.incident_manager.manager   | Pipeline started - monitoring for anomalies...
+INFO:     Application startup complete.
+
+# Then continuous monitoring logs (expected):
+2026-03-14 16:01:54 | INFO     | src.anomaly_detector.detector  | Rule-based anomaly: NetworkDNSFailure...
+2026-03-14 16:01:54 | INFO     | src.incident_manager.manager   | Incident #1 created...
 ```
- Point out: The pipeline is already running in the background, continuously generating logs and scanning for anomalies.
+ Point out: The pipeline is already running in the background, continuously generating logs and scanning for anomalies every 30 seconds. These operational logs show the monitoring system working - focus your demo on the browser/API, not the scrolling terminal.
 
 **3. Open the Interactive Docs**
 Navigate to: http://localhost:8000/docs
@@ -272,15 +330,27 @@ Navigate to: http://localhost:8000/docs
 
 **4. Show the Pipeline Status**
 - Execute `GET /api/v1/status`
+- Response example:
+  ```json
+  {
+    "simulator_running": true,
+    "detector_running": true,
+    "total_logs_processed": 969,
+    "total_anomalies_detected": 7,
+    "total_incidents_created": 7,
+    "last_scan_at": "2026-03-14T10:33:54.635201"
+  }
+  ```
 - Show:
   - `simulator_running: true` — Mock K8s logs being generated
-  - `detector_running: true` — Continuous anomaly scanning
+  - `detector_running: true` — Continuous anomaly scanning (every 30s)
   - `total_logs_processed` — Logs analyzed so far
   - `total_anomalies_detected` — Auto-detected anomalies
+  - `total_incidents_created` — Incidents created with full RCA
 
 **5. Trigger a Manual Scan** (The Highlight!)
 - Execute `POST /api/v1/scan`
-- Wait 2-3 seconds
+- Wait 1-2 seconds
 - Show the response:
 
 ```json
@@ -299,11 +369,13 @@ Navigate to: http://localhost:8000/docs
       "SHORT-TERM: Profile application for memory leaks",
       "LONG-TERM: Implement VPA for auto-tuning"
     ],
-    "github_issue_url": "https://github.com/.../issues/1234",
-    "confidence": 0.92
+    "github_issue_url": "https://github.com/your_github_username/ai-devops-copilot/issues/1234",
+    "confidence": 0.95
   }]
 }
 ```
+
+**Note:** Incident types are randomly selected (OOMKilled, CrashLoopBackOff, DNS failures, etc.). All types provide equally detailed RCA.
 
 **6. View Full Incident Details**
 - Execute `GET /api/v1/incidents/2`
@@ -493,27 +565,27 @@ DATABASE_URL=sqlite:///./data/production_incidents.db
 ## Running Tests
 
 ```bash
-# Activate virtual environment
+# Activate virtual environment (optional if using explicit paths below)
 source venv/bin/activate
 
-# Run all tests
-pytest
+# Run all tests (using explicit venv path recommended)
+./venv/bin/python -m pytest
 
 # Run with verbose output
-pytest -v
+./venv/bin/python -m pytest -v
 
 # Run specific test file
-pytest tests/test_simulator.py -v
+./venv/bin/python -m pytest tests/test_simulator.py -v
 
 # Run with coverage report
-pytest --cov=src --cov-report=html
+./venv/bin/python -m pytest --cov=src --cov-report=html
 open htmlcov/index.html  # View in browser
 
 # Run only API tests
-pytest tests/test_api.py -v
+./venv/bin/python -m pytest tests/test_api.py -v
 
 # Run and stop on first failure
-pytest -x
+./venv/bin/python -m pytest -x
 ```
 
 **Test Coverage**: Currently at **42 passing tests** covering:
@@ -556,7 +628,7 @@ curl http://localhost:11434/api/tags
 **Problem**: Database not initialized  
 **Solution**:
 ```bash
-python -c "from src.database import init_db; init_db()"
+./venv/bin/python -c "from src.database import init_db; init_db()"
 ```
 
 #### 4. Port 8000 Already in Use
@@ -565,7 +637,7 @@ python -c "from src.database import init_db; init_db()"
 **Solution**:
 ```bash
 # Option 1: Use a different port
-python -m uvicorn src.main:app --port 8001
+./venv/bin/python -m uvicorn src.main:app --port 8001
 
 # Option 2: Kill the process on port 8000 (macOS/Linux)
 lsof -ti:8000 | xargs kill -9
@@ -576,13 +648,11 @@ lsof -ti:8000 | xargs kill -9
 **Problem**: Environment not set up correctly  
 **Solution**:
 ```bash
-# Ensure you're in the virtual environment
-source venv/bin/activate
-
-# Run tests with proper Python path
+# Run tests with explicit venv path (recommended)
 ./venv/bin/python -m pytest -v
 
-# Or set PYTHONPATH
+# Or set PYTHONPATH and use activated venv
+source venv/bin/activate
 export PYTHONPATH=$PWD
 pytest -v
 ```
@@ -622,16 +692,18 @@ Enable detailed logging:
 LOG_LEVEL=DEBUG
 
 # Then check logs for detailed output
-python -m uvicorn src.main:app --port 8000 --reload
+./venv/bin/python -m uvicorn src.main:app --port 8000 --reload
 ```
 
 ### Still Having Issues?
 
 1. Check that all files are present: `ls -R src/`
-2. Verify Python version: `python --version` (should be 3.11+)
-3. Check virtual environment: `which python` (should point to `venv/bin/python`)
+2. Verify Python version: `./venv/bin/python --version` (should be 3.11+)
+3. Check virtual environment: `which python` (should point to `venv/bin/python`, or use `./venv/bin/python` explicitly)
 4. Review logs for specific error messages
 5. Check the [GitHub Issues](../../issues) for similar problems
+
+**Tip for macOS users:** If you have shell aliases (e.g., `python` aliased to `python3.11`), always use `./venv/bin/python` for explicit venv access.
 
 ---
 
